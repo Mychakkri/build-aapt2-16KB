@@ -1,0 +1,71 @@
+name: Build libaapt2.so (16KB page)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86, x86_64]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build clang zip
+
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          add-to-path: true
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI="${{ matrix.abi }}" \
+            -DANDROID_PLATFORM=android-21 \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build libaapt2.so
+        run: cmake --build build --target aapt2 -j$(nproc)
+
+      - name: Move output
+        run: |
+          mkdir -p output/${{ matrix.abi }}
+          cp build/libaapt2.so output/${{ matrix.abi }}/
+
+      - name: Upload artifacts (per arch)
+        uses: actions/upload-artifact@v4
+        with:
+          name: libaapt2-${{ matrix.abi }}
+          path: output/${{ matrix.abi }}/libaapt2.so
+
+  package:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: output
+
+      - name: Create zip package
+        run: |
+          cd output
+          zip -r libaapt2-libs.zip ./*
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: libaapt2-libs
+          path: output/libaapt2-libs.zip

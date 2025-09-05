@@ -67,7 +67,7 @@ target_include_directories(aapt2 PRIVATE
     ${SRC_PATH}/zlib
     ${SRC_PATH}/cutils
     ${SRC_PATH}/binder
-    ${SRC_PATH}/fake_headers
+    fake_headers
 )
 
 # Android define

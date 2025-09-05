@@ -46,12 +46,9 @@ add_library(aapt2 SHARED ${AAPT2_SOURCES})
 
 # Include dirs
 target_include_directories(aapt2 PRIVATE
+    ${NDK_SYSROOT}/usr/include
     ${SRC_PATH}
     ${SRC_PATH}/androidfw
-    ${SRC_PATH}/base
-    ${SRC_PATH}/cmd/aapt2
-    ${SRC_PATH}/include
-
     ${SRC_PATH}/aapt2
     ${SRC_PATH}/libbase/include
     ${SRC_PATH}/libsystem/include

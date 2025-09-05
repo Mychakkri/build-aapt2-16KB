@@ -46,6 +46,7 @@ add_library(aapt2 SHARED ${AAPT2_SOURCES})
 
 # Include dirs
 target_include_directories(aapt2 PRIVATE
+    ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include
     ${NDK_SYSROOT}/usr/include
     ${SRC_PATH}
     ${SRC_PATH}/androidfw

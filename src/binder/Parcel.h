@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <cstring>   // สำหรับ memcpy
-#include <cstdlib>   // สำหรับ malloc/free
+#include <cstring>
+#include <cstdlib>
 
 class Parcel {
 public:
@@ -38,21 +38,27 @@ public:
         return u"";
     }
 
-    // Stub for writeInplace (แค่จอง buffer เฉย ๆ)
+    // Stub for writeBool
+    int writeBool(bool val) {
+        data_.push_back(val ? "1" : "0");
+        return 0;
+    }
+
+    // Stub for writeInplace
     void* writeInplace(size_t size) {
         void* buf = malloc(size);
-        buffers_.push_back(buf); // เก็บไว้ free ทีหลัง
+        buffers_.push_back(buf);
         return buf;
     }
 
-    // Stub for write (copy data ลง buffer)
+    // Stub for write raw data
     int write(const void* data, size_t len) {
         const char* cdata = static_cast<const char*>(data);
         data_.emplace_back(cdata, cdata + len);
         return 0;
     }
 
-    // Stub for setDataPosition (reset position)
+    // Stub for setDataPosition
     void setDataPosition(size_t pos) { pos_ = pos; }
 
     // Reset
@@ -66,5 +72,5 @@ public:
 private:
     std::vector<std::string> data_;
     size_t pos_ = 0;
-    std::vector<void*> buffers_; // สำหรับเก็บ pointer ที่ malloc มา
+    std::vector<void*> buffers_;
 };

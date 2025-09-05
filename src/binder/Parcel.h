@@ -2,35 +2,38 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <cstring>
 #include <cstdlib>
 
 class Parcel {
 public:
     Parcel() = default;
-    ~Parcel() = default;
-
-    // Dummy write/read int32
-    int writeInt32(int32_t val) { 
-        data_.push_back(std::to_string(val)); 
-        return 0; 
+    ~Parcel() {
+        for (auto* p : buffers_) free(p);
     }
 
-    int readInt32(int32_t* out) { 
-        if (pos_ < data_.size()) {
-            *out = std::stoi(data_[pos_++]);
-            return 0;
-        }
-        return -1;
+    // ========== Primitive Writes ==========
+    int writeInt32(int32_t val) { return push(std::to_string(val)); }
+    int writeInt64(int64_t val) { return push(std::to_string(val)); }
+    int writeFloat(float val)   { return push(std::to_string(val)); }
+    int writeDouble(double val) { return push(std::to_string(val)); }
+    int writeBool(bool val)     { return push(val ? "1" : "0"); }
+
+    // ========== Primitive Reads ==========
+    int readInt32(int32_t* out) { return pop(out); }
+    int readInt64(int64_t* out) { return pop(out); }
+    int readFloat(float* out)   { return pop(out); }
+    int readDouble(double* out) { return pop(out); }
+    bool readBool() {
+        if (pos_ < data_.size()) return data_[pos_++] == "1";
+        return false;
     }
 
-    // Dummy write/read string16
-    int writeString16(const std::u16string& str) { 
-        data_.push_back(std::string(str.begin(), str.end())); 
+    // ========== Strings ==========
+    int writeString16(const std::u16string& str) {
+        data_.push_back(std::string(str.begin(), str.end()));
         return 0;
     }
-
-    std::u16string readString16() { 
+    std::u16string readString16() {
         if (pos_ < data_.size()) {
             std::string s = data_[pos_++];
             return std::u16string(s.begin(), s.end());
@@ -38,33 +41,24 @@ public:
         return u"";
     }
 
-    // Stub for writeBool
-    int writeBool(bool val) {
-        data_.push_back(val ? "1" : "0");
+    // ========== Raw data ==========
+    int write(const void* buf, size_t len) {
+        const char* cbuf = static_cast<const char*>(buf);
+        data_.emplace_back(cbuf, cbuf + len);
         return 0;
     }
-
-    // Stub for writeInplace
     void* writeInplace(size_t size) {
         void* buf = malloc(size);
         buffers_.push_back(buf);
         return buf;
     }
 
-    // Stub for write raw data
-    int write(const void* data, size_t len) {
-        const char* cdata = static_cast<const char*>(data);
-        data_.emplace_back(cdata, cdata + len);
-        return 0;
-    }
-
-    // Stub for setDataPosition
+    // ========== Position control ==========
     void setDataPosition(size_t pos) { pos_ = pos; }
-
-    // Reset
-    void reset() { 
-        pos_ = 0; 
-        data_.clear(); 
+    size_t dataPosition() const { return pos_; }
+    void reset() {
+        pos_ = 0;
+        data_.clear();
         for (auto* p : buffers_) free(p);
         buffers_.clear();
     }
@@ -73,4 +67,18 @@ private:
     std::vector<std::string> data_;
     size_t pos_ = 0;
     std::vector<void*> buffers_;
+
+    int push(const std::string& s) {
+        data_.push_back(s);
+        return 0;
+    }
+
+    template<typename T>
+    int pop(T* out) {
+        if (pos_ < data_.size()) {
+            *out = static_cast<T>(std::stod(data_[pos_++])); // ใช้ stod แปลง generic
+            return 0;
+        }
+        return -1;
+    }
 };
